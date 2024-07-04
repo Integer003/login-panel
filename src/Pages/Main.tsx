@@ -7,9 +7,65 @@ import { PatientLoginMessage } from 'Plugins/PatientAPI/PatientLoginMessage'
 import { PatientRegisterMessage } from 'Plugins/PatientAPI/PatientRegisterMessage'
 import { AddPatientMessage } from 'Plugins/DoctorAPI/AddPatientMessage'
 import { useHistory } from 'react-router';
+import {
+    AppBar,
+    Toolbar,
+    Typography,
+    Button,
+    Container,
+    CssBaseline,
+    Box,
+    ThemeProvider,
+    createTheme,
+    TextField,
+    Grid,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    IconButton,
+} from '@mui/material';
+import { Brightness4, Brightness7, Language } from '@mui/icons-material';
+
+const lightTheme = createTheme({
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#1976d2',
+        },
+        secondary: {
+            main: '#dc004e',
+        },
+    },
+});
+
+const darkTheme = createTheme({
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#90caf9',
+        },
+        secondary: {
+            main: '#f48fb1',
+        },
+    },
+});
+
+const themes = {
+    light: lightTheme,
+    dark: darkTheme,
+};
+
+type ThemeMode = 'light' | 'dark';
 
 export function Main(){
     const history=useHistory()
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [userType, setUserType] = useState('doctor'); // 默认用户类型为医生
+    const [themeMode, setThemeMode] = useState<ThemeMode>('dark');
+    const [language, setLanguage] = useState('zh'); // 默认语言为中文
+
     const sendPostRequest = async (message: API) => {
         try {
             const response = await axios.post(message.getURL(), JSON.stringify(message), {
@@ -31,36 +87,116 @@ export function Main(){
         }
     };
 
+    const handleLogin = () => {
+        if (userType === 'user') {
+            sendPostRequest(new LoginMessage(username, password));
+        } else {
+            sendPostRequest(new PatientLoginMessage(username, password));
+        }
+    };
+
+    const handleRegister = () => {
+        if (userType === 'User') {
+            sendPostRequest(new RegisterMessage(username, password));
+        } else {
+            sendPostRequest(new PatientRegisterMessage(username, password));
+        }
+    };
+
+    const toggleTheme = () => {
+        setThemeMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+    };
+
+    const toggleLanguage = () => {
+        setLanguage((prevLanguage) => (prevLanguage === 'zh' ? 'en' : 'zh'));
+    };
+
     return (
-        <div className="App">
-            <header className="App-header">
-                <h1>HTTP Post Requests</h1>
-            </header>
-            <main>
-                <button onClick={() => sendPostRequest(new LoginMessage('aaaa', 'bbbb'))}>
-                    Doctor Login aaaa
-                </button>
-                <button onClick={() => sendPostRequest(new RegisterMessage('aaaa', 'bbbb'))}>
-                    Doctor Register aaaa
-                </button>
-                <button onClick={() => sendPostRequest(new LoginMessage('aaaab', 'bbbb'))}>
-                    Doctor Login aaaab
-                </button>
-                <button onClick={() => sendPostRequest(new PatientLoginMessage('cccc', 'bbbb'))}>
-                    Patient Login cccc
-                </button>
-                <button onClick={() => sendPostRequest(new PatientRegisterMessage('cccc', 'bbbb'))}>
-                    Patient Register cccc
-                </button>
-                <button onClick={() => sendPostRequest(new AddPatientMessage('aaaa', 'cccc'))}>
-                    Add Patient
-                </button>
-                <button onClick={() => history.push("/another")}>
-                    jump to another page
-                </button>
-            </main>
-        </div>
+        <ThemeProvider theme={themes[themeMode]}>
+            <CssBaseline />
+            <AppBar position="static">
+                <Toolbar>
+                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        某二手商品交易网
+                        <img src="../images/summer.png" alt="logo" />
+                    </Typography>
+                    <IconButton color="inherit" onClick={toggleTheme}>
+                        {themeMode === 'light' ? <Brightness4 /> : <Brightness7 />}
+                    </IconButton>
+                    <IconButton color="inherit" onClick={toggleLanguage}>
+                        <Language />
+                    </IconButton>
+                </Toolbar>
+            </AppBar>
+            <Container maxWidth="md">
+                <Box sx={{ mt: 4, textAlign: 'center' }}>
+                    <Typography variant="h1">
+                        {language === 'zh' ? '登录/注册' : 'Login/Register'}
+                    </Typography>
+                    <Grid container spacing={2} justifyContent="center">
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                label={language === 'zh' ? '用户名' : 'Username'}
+                                variant="outlined"
+                                fullWidth
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                sx={{ mb: 2 }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                label={language === 'zh' ? '密码' : 'Password'}
+                                variant="outlined"
+                                type="password"
+                                fullWidth
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                sx={{ mb: 2 }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <FormControl fullWidth>
+                                <InputLabel>用户类型</InputLabel>
+                                <Select
+                                    value={userType}
+                                    onChange={(e) => setUserType(e.target.value as string)}
+                                >
+                                    <MenuItem value="doctor">{language === 'zh' ? '用户' : 'User'}</MenuItem>
+                                    <MenuItem value="patient">{language === 'zh' ? '监管方' : 'Regulator'}</MenuItem>
+                                    <MenuItem value="patient">{language === 'zh' ? '运营方' : 'Operator'}</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleLogin}
+                                sx={{ m: 1 }}
+                            >
+                                {language === 'zh' ? '登录' : 'Login'}
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={handleRegister}
+                                sx={{ m: 1 }}
+                            >
+                                {language === 'zh' ? '注册' : 'Register'}
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                onClick={() => history.push('/another')}
+                                sx={{ m: 1 }}
+                            >
+                                {language === 'zh' ? '跳转到另一个页面' : 'Go to Another Page'}
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Box>
+            </Container>
+        </ThemeProvider>
     );
 };
-
-
